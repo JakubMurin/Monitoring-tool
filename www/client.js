@@ -139,10 +139,15 @@ class Stats {
             document.getElementById('similar-header').textContent = `IPs with similar trafic for ${this.selectedIP.ip}`;
             socket.emit('similar ips', this.selectedIP.ip, ips => {
                 let out = "<tr><th>address</th><th>edit distance</th></tr>";
+                const similarIPElement = document.getElementById('similar-ips');
+                similarIPElement.innerHTML = out;
                 for (let [ip, distance] of ips) {
-                    out += `<tr><td>${ip}</td><td>${distance}</td></tr>`;
+                    const el = document.createElement('tr');
+                    el.innerHTML = `<tr><td class="ip-ref">${ip}</td><td>${distance}</td></tr>`;
+                    const [ip_name] = el.getElementsByClassName('ip-ref');
+                    ip_name.addEventListener('click', () => this.selectIp(ip));
+                    similarIPElement.append(el);
                 }
-                document.getElementById('similar-ips').innerHTML = out;
             });
         });
 
@@ -310,6 +315,15 @@ class Stats {
             case 2: return ['Temporary blocked IP', 'remove tmp block']; // tmp blocked 
             case 3: return ['Removed from stats', 'add to stats']; // removed from stats 
         }
+    }
+
+    // select ip by click on similar
+    selectIp(ip) {
+        const index = this.statistics.ips.findIndex(x => x.ip === ip);
+        this.selectedIP = this.statistics.ips[index];
+        this.page = Math.floor(index / this.PAGE_LIMIT); 
+        socket.emit('ip address', this.selectedIP.ip);
+        this.set_data_ips();
     }
 }
 

@@ -65,7 +65,7 @@ button {
     text-align: center;
 }
 
-#similar-ips > tr > td:first-child {
+.ip-ref{
     color: blue;
     text-decoration: underline;
     cursor: pointer;
