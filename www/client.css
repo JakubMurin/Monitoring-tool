@@ -1,0 +1,72 @@
+body {
+    background-color: #F0EEEE !important;
+}
+
+h1 {
+    text-align: center;
+}
+
+canvas {
+    width: 100%;
+    margin-bottom: 0.5em;
+}
+
+button {
+    text-transform: uppercase;
+}
+
+.row {
+    margin-bottom: 1rem;
+}
+
+.hide {
+    display: none;
+}
+
+#login {
+    padding: 30em;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+}
+
+::placeholder {
+    text-align: center;
+}
+
+.float{
+	position: fixed;
+	width: 60px;
+	height: 60px;
+	color: #FFF;
+	text-align: center;
+    font-size: xx-large;
+	box-shadow: 2px 2px 3px #999;
+}
+
+#reset-all {
+    bottom: 20px;
+    right: 20px;
+    fill: white;
+}
+
+#pause {
+    bottom: 100px;
+	right: 20px;
+}
+
+.icon {
+    width: 2em;
+    height: 2em;
+}
+
+#similar-ips {
+    text-align: center;
+}
+
+#similar-ips > tr > td:first-child {
+    color: blue;
+    text-decoration: underline;
+    cursor: pointer;
+}

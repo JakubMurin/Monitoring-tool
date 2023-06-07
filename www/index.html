@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Monitoring tool</title>
+
+    <link rel="stylesheet" , type="text/css" href="client.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
+    <script src="https://cdn.jsdelivr.net/npm/md5-js-tools@1.0.2/lib/md5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+
+    <script type="module" src="client.js"></script>
+</head>
+
+<body>
+    <h1>Monitoring tool</h1>
+    <!-- LOGIN -->
+    <div id="login" class="mx-auto bg-white rounded text-center border border-warning p-5 shadow">
+        <p>
+            <input type="text" id="username" placeholder="USERNAME"/>
+        </p>
+        <p>
+            <input type="password" id="passwd" placeholder="PASSWORD"/>
+        </p>
+        <div>
+            <button id="loginButton" type="button" class="btn btn-success">LOGIN</button>
+        </div>
+    </div>
+
+    <!-- STATS -->
+    <div class="container hide" id="stats">
+        <!-- FLOATING BUTTONS -->
+        <button id="pause" class="float btn btn-warning">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 512" class="icon">
+                <path d="M48 64C21.5 64 0 85.5 0 112V400c0 26.5 21.5 48 48 48H80c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H48zm192 0c-26.5 0-48 21.5-48 48V400c0 26.5 21.5 48 48 48h32c26.5 0 48-21.5 48-48V112c0-26.5-21.5-48-48-48H240z"/>
+            </svg>
+        </button>
+        <button id="reset-all" class="float btn btn-dark">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512" class="icon">
+                <path d="M135.2 17.7L128 32H32C14.3 32 0 46.3 0 64S14.3 96 32 96H416c17.7 0 32-14.3 32-32s-14.3-32-32-32H320l-7.2-14.3C307.4 6.8 296.3 0 284.2 0H163.8c-12.1 0-23.2 6.8-28.6 17.7zM416 128H32L53.2 467c1.6 25.3 22.6 45 47.9 45H346.9c25.3 0 46.3-19.7 47.9-45L416 128z"/>
+            </svg>
+        </button>
+
+        <!-- IP CHART -->
+        <div class="row bg-white rounded mt-3 shadow">
+            <div class="col-12 col-md-8">
+                <canvas id="ips"></canvas>
+                <p class="text-center">
+                    <button id="prev" type="button" class="btn btn-dark">PREV PAGE</button>
+                    <button id="next" type="button" class="btn btn-dark">NEXT PAGE</button>
+                </p>
+            </div>
+            <div class="col-12 col-md-4">
+                <p id="ip-info">
+                </p>
+                <div class="d-grid gap-1">
+                    <button id="block" type="button" class="btn btn-outline-danger btn-sm">BLOCK SELECTED IP</button>
+                    <button id="block_org" type="button" class="btn btn-outline-danger btn-sm">BLOCK ORGRANISATION</button>
+                    <button id="stat_show" type="button" class="btn btn-outline-secondary btn-sm">DON`T SHOW IN STATS</button>
+                    <button id="tmp_block" type="button" class="btn btn-outline-primary btn-sm">BLOCK IP TEMPORARY</button>
+                    <input id="timeout" class="border border-primary rounded text-center" placeholder="TIMEOUT (eg. 2h45m10s)">
+                    <button id="reset_ip" type="button" class="btn btn-outline-dark btn-sm">RESET SELECTED IP STATS</button>
+                    <button id="similar" type="button" class="btn btn-warning btn-sm">SHOW SIMILAR IPs</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SIMILAR IPS -->
+        <div class="row bg-white rounded mt-3 shadow">
+            <h3 id="similar-header">IPs with similar trafic</h3>
+            <table>
+                <tbody id="similar-ips"></tbody>
+            </table>
+        </div>
+
+        <!-- OTHER CHARTS -->
+        <div class="row gx-10 gy-10  mt-3">
+            <div class="col-12 col-md-6">
+                <div class="bg-white rounded shadow">
+                    <canvas id="protocols"></canvas>
+                </div>
+            </div>
+            <div class="col-12 col-md-6">
+                <div class="bg-white rounded shadow">
+                    <canvas id="ports"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- RULES LISTING -->
+        <div class="row bg-white rounded shadow">
+            <table>
+                <tbody id="rules"></tbody>
+            </table>
+        </div>
+
+        <!-- SHUTDOWN APLICATION -->
+        <p class="text-center">
+            <button id="stop" type="button" class="btn btn-primary">SHUTDOWN</button>
+        </p>
+    </div>
+
+</body>
+
+</html>

@@ -1,0 +1,27 @@
+table inet filter {
+	set not_process {
+		type ipv4_addr
+		flags interval
+		elements = { 127.0.0.1 }
+	}
+
+	set blocked {
+		type ipv4_addr
+		flags interval
+	}
+
+	set blocked_temporary {
+		type ipv4_addr
+		flags interval,timeout
+	}
+
+	chain input {
+		type filter hook input priority filter; policy accept;
+		ip saddr @blocked drop
+		ip saddr @blocked_temporary drop
+		ip saddr != @not_process jump monitoring
+	}
+
+	chain monitoring {
+	}
+}
