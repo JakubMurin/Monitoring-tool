@@ -36,7 +36,7 @@ CREATE TABLE `rules` (
   `time_at` timestamp PRIMARY KEY DEFAULT (current_timestamp),
   `ip` varchar(255),
   `type` integer,
-  `end_time` timestamp,
+  `end_time` timestamp NULL,
   FOREIGN KEY (`type`) REFERENCES `rule_types` (`id`)
     ON DELETE CASCADE
 );

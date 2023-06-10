@@ -31,15 +31,20 @@ let sockets = new Set();
 let statistic = {};
 
 db.startupLoad().then((out) => {
+  if (out.some(x => x===undefined)) {
+    console.log("Data was not loaded from db");
+    return;
+  }
   let stats = out[0];
   let rules = out[1];
-  console.log("Data loaded from db");
+  console.log("Data has been loaded from db");
   for (let rule of rules) {
     if (rule.type !== 0) {
-      stats[rule.ip] = rule.type;
+      stats.ips[rule.ip].status = rule.type;
     }
   }
   statistic = stats;
+  nft.loadStats(Object.keys(stats.ips));
 });
 
 let tmp_stats = {};
@@ -67,18 +72,18 @@ io.on('connect', socket => {
     })
 
     // Remove from stats
-    socket.on('remove from stats', (ip, callback) => {
+    socket.on('remove from stats', async (ip, callback) => {
       const toChange = nft.removeFromStats(ip);
-      db.addRule(ip, 3);
+      await db.addRule(ip, 3);
       for (let i of toChange) {
         statistic.ips[i].status = 3;
       }
       callback(ip, "Removed from stats", 'add to stats');
     })
 
-    socket.on('add to stats', (ip, callback) => {
+    socket.on('add to stats', async (ip, callback) => {
       const toChange = nft.addToStats(ip);
-      db.addRule(ip, 0);
+      await db.addRule(ip, 0);
       for (let i of toChange) {
         statistic.ips[i].status = 0;
       }
@@ -86,18 +91,19 @@ io.on('connect', socket => {
     })
 
     // Block
-    socket.on('block', (ip, callback) => {
+    socket.on('block', async (ip, callback) => {
       const toChange = nft.blockIp(ip);
-      db.addRule(ip, 1);
+      await db.addRule(ip, 1);
       for (let i of toChange) {
+        console.log(i);
         statistic.ips[i].status = 1;
       }
       callback(ip, "Blocked IP", 'unblock');
     })
 
-    socket.on('unblock', (ip, callback) => {
+    socket.on('unblock', async (ip, callback) => {
       const toChange = nft.unblockIp(ip);
-      db.addRule(ip, 0);
+      await db.addRule(ip, 0);
       for (let i of toChange) {
         statistic.ips[i].status = 0;
       }
@@ -105,16 +111,16 @@ io.on('connect', socket => {
     })
 
     // Temporary block
-    socket.on('tmp block', (ip, time, callback) => {
+    socket.on('tmp block', async (ip, time, callback) => {
       const toChange = nft.tmpBlockIp(ip, time);
       const timeout = nft.timeToSeconds(time);
-      db.addRule(ip, 2);
+      await db.addRule(ip, 2);
       for (let i of toChange) {
         statistic.ips[i].status = 2;
-        setTimeout( (i) => {
+        setTimeout( async (i) => {
           statistic.ips[i].status = 0;
           socket.emit('remove rule', i);
-          db.addRule(ip, 0);
+          await db.addRule(ip, 0);
         }, timeout * 1000, i);
       }
       const date = new Date();
@@ -122,9 +128,9 @@ io.on('connect', socket => {
       callback(ip, "Temporary blocked IP to " + date.toLocaleString('en-GB', {timeZone: 'UTC'}), 'remove tmp block');
     })
 
-    socket.on('remove tmp block', (ip, time, callback) => {
+    socket.on('remove tmp block', async (ip, time, callback) => {
       const toChange = nft.removeTmpBlockIp(ip);
-      db.addRule(ip, 0);
+      await db.addRule(ip, 0);
       for (let i of toChange) {
         statistic.ips[i].status = 0;
       }
@@ -139,7 +145,7 @@ io.on('connect', socket => {
     })
 
     // Send current nft rules
-    socket.on('get rules', callback => db.getRules().then(rules => callback(rules)));
+    socket.on('get rules', async callback => await db.getRulesWithConn().then(rules => callback(rules)));
 
     // Reset statistic for exact ip
     socket.on('reset', ip => {
@@ -149,21 +155,22 @@ io.on('connect', socket => {
     })
 
     // Reset whole statistisc
-    socket.on('reset all', () => {
+    socket.on('reset all', async () => {
       statistic = {
         protocols: [0, 0, 0],
         ips: {},
         portStat: {}
       };
       tmp_stats = {};
-      db.saveStats(statistic);
+      await db.saveStats(statistic);
       console.log('Reset whole statistics');
     })
 
     // Shutdow aplication
     socket.on('shutdown', () => {
-      db.saveStats(statistic).then(() => {
+      db.saveStats(statistic).then(async () => {
         nft.disconnectNfqueue();
+        await db.pool.end();
         process.exit();
       })
     })

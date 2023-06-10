@@ -22,6 +22,10 @@ class NFT {
     blockedIps = new IPSet();
     tmpBlockedIps = new IPSet();
 
+    loadStats(stats) {
+        stats.forEach(ip => this.ipStats.add(IPSet.ipToNum(ip)));
+    }
+
     addIp(ip) {
         this.ipStats.add(IPSet.ipToNum(ip));
     }
