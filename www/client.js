@@ -341,7 +341,9 @@ function login() {
     console.log('login');
     let passwd = document.getElementById('passwd').value;
     passwd = MD5.generate(passwd);
-    socket.emit('login', document.getElementById('username').value, passwd);
+    socket.emit('login', document.getElementById('username').value, passwd, () => {
+        document.getElementById('error').innerHTML = "Invalid Credentials";
+    });
 }
 
 document.addEventListener('DOMContentLoaded', () => {

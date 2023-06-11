@@ -83,9 +83,10 @@ io.on('connect', socket => {
     console.log(`Client disconected`);
   })
 
-  socket.on('login', (username, passwd) => {
+  socket.on('login', (username, passwd, wrong) => {
     const savedPasswd = MD5.generate(process.env.APP_PASSWORD)
     if (username !== process.env.APP_USERNAME || passwd !== savedPasswd) {
+      wrong();
       return;
     }
 
