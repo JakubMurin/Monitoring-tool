@@ -25,7 +25,6 @@ server.listen(9000, () => {
 // Addresses to exclude from port stats
 const local_addresses = ['127.0.0.1'];
 
-let sockets = new Set();
 const roomName = "logged";
 
 // load saved statistic from db
@@ -78,7 +77,7 @@ io.on('connect', socket => {
   console.log(`New client connected`)
 
   socket.on('disconnect', msg => {
-    sockets.delete(socket);
+    socket.leave(roomName);
     console.log(`Client disconected`);
   })
 
