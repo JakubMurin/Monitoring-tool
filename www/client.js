@@ -274,12 +274,53 @@ class Stats {
         i.innerHTML = text;
     }
 
-    // Names for buttons
+    // Names and behaviour for buttons
     conf_buttons(ip_status) {
-        document.getElementById('block').textContent = (ip_status == 1) ? 'UNBLOCK SELECTED IP' : 'BLOCK SELECTED IP';
-        document.getElementById('block_org').textContent = (ip_status == 1) ? 'UNBLOCK ORGRANISATION' : 'BLOCK ORGRANISATION';
-        document.getElementById('tmp_block').textContent = (ip_status == 2) ? 'UNBLOCK FROM TEMPORARY' : 'BLOCK IP TEMPORARY';
-        document.getElementById('stat_show').textContent = (ip_status == 3) ? 'SHOW IN STATS' : 'DON`T SHOW IN STATS';
+        if (ip_status === 1) {
+            const block = document.getElementById('block');
+            block.textContent = 'UNBLOCK SELECTED IP';
+            block.classList.remove('hide');
+            const orgBlock = document.getElementById('block_org');
+            orgBlock.classList.remove('hide');
+            orgBlock.textContent = 'UNBLOCK ORGRANISATION';
+            document.getElementById('tmp_block').classList.add('hide');
+            document.getElementById('timeout').classList.add('hide');
+            document.getElementById('stat_show').classList.add('hide');
+            return;
+        }
+        if (ip_status === 2) {
+            const tmpBlock = document.getElementById('tmp_block');
+            tmpBlock.textContent = 'UNBLOCK FROM TEMPORARY';
+            tmpBlock.classList.remove('hide');
+            document.getElementById('timeout').classList.remove('hide');
+            document.getElementById('block').classList.add('hide');
+            document.getElementById('block_org').classList.add('hide');
+            document.getElementById('stat_show').classList.add('hide');
+            return;
+        }
+        if (ip_status === 3) {
+            const tmpBlock = document.getElementById('stat_show');
+            tmpBlock.textContent = 'SHOW IN STATS';
+            tmpBlock.classList.remove('hide');
+            document.getElementById('block').classList.add('hide');
+            document.getElementById('block_org').classList.add('hide');
+            document.getElementById('tmp_block').classList.add('hide');
+            document.getElementById('timeout').classList.add('hide');
+            return;
+        }
+        const b = document.getElementById('block');
+        b.textContent = 'BLOCK SELECTED IP';
+        b.classList.remove('hide');
+        const bO = document.getElementById('block_org');
+        bO.textContent = 'BLOCK ORGRANISATION';
+        bO.classList.remove('hide');
+        const tB = document.getElementById('tmp_block');
+        tB.textContent = 'BLOCK IP TEMPORARY';
+        tB.classList.remove('hide');
+        document.getElementById('timeout').classList.remove('hide');
+        const s = document.getElementById('stat_show');
+        s.textContent = 'DON`T SHOW IN STATS';
+        s.classList.remove('hide');
     }
 
     checkTimeout(time) {
