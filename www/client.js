@@ -56,51 +56,46 @@ class Stats {
 
         const blockButton = document.getElementById('block');
         blockButton.addEventListener('click', () => {
-            let action, callback;
+            let action;
             if (this.selectedIP.status == 1) {
                 action = 'unblock';
                 blockButton.textContent = 'BLOCK SELECTED IP';
                 this.selectedIP.status = 0;
-                callback = (succesfully, ip) => { if (succesfully) document.getElementById(ip).remove();};
             }
             else {
                 action = 'block';
                 blockButton.textContent = 'UNBLOCK SELECTED IP';
                 this.selectedIP.status = 1;
-                callback = (ip, rule, action) => this.edit_rules(ip, rule, action);
 
             }
             this.conf_buttons(this.selectedIP.status);
-            socket.emit(action, this.selectedIP.ip, callback);
+            socket.emit(action, this.selectedIP.ip);
         });
 
         const blockOrgButton = document.getElementById('block_org');
         blockOrgButton.addEventListener('click', () => {
-            let action, callback;
+            let action;
             if (this.selectedIP.status == 1) {
                 action = 'unblock';
                 blockOrgButton.textContent = 'BLOCK ORGRANISATION';
                 this.selectedIP.status = 0;
-                callback = (succesfully, ip) => { if (succesfully) document.getElementById(ip).remove();};
             }
             else {
                 action = 'block';
                 blockOrgButton.textContent = 'UNBLOCK ORGRANISATION';
                 this.selectedIP.status = 1;
-                callback = (ip, rule, action) => this.edit_rules(ip, rule, action);
             }
             this.conf_buttons(this.selectedIP.status);
-            socket.emit(action, this.selectedIP.org.netRange, callback);
+            socket.emit(action, this.selectedIP.org.netRange);
         });
 
         const tmpBlockButton = document.getElementById('tmp_block');
         tmpBlockButton.addEventListener('click', () => {
-            let action, time, callback;
+            let action, time;
             if (this.selectedIP.status == 2) {
                 action = 'remove tmp block';
                 tmpBlockButton.textContent = 'BLOCK IP TEMPORARY';
                 this.selectedIP.status = 0;
-                callback = (succesfully, ip) => { if (succesfully) document.getElementById(ip).remove();};
             }
             else {
                 action = 'tmp block';
@@ -109,29 +104,26 @@ class Stats {
                 const el = document.getElementById('timeout');
                 time = this.checkTimeout(el.value.trim());
                 el.value = '';
-                callback = (ip, rule, action) => this.edit_rules(ip, rule, action);
             }
             this.conf_buttons(this.selectedIP.status);
-            socket.emit(action, this.selectedIP.ip, time, callback);
+            socket.emit(action, this.selectedIP.ip, time);
         });
 
         const showButton = document.getElementById('stat_show');
         showButton.addEventListener('click', () => {
-            let action, callback;
+            let action;
             if (this.selectedIP.status == 3) {
                 action = 'add to stats';
                 showButton.textContent = 'DON`T SHOW IN STATS';
                 this.selectedIP.status = 0;
-                callback = (succesfully, ip) => { if (succesfully) document.getElementById(ip).remove();};
             }
             else {
                 action = 'remove from stats';
                 showButton.textContent = 'SHOW IN STATS';
                 this.selectedIP.status = 3;
-                callback = (ip, rule, action) => this.edit_rules(ip, rule, action);
             }
             this.conf_buttons(this.selectedIP.status);
-            socket.emit(action, this.selectedIP.ip, callback);
+            socket.emit(action, this.selectedIP.ip);
         });
 
         const similarButton = document.getElementById('similar');
@@ -224,9 +216,13 @@ class Stats {
             this.set_data_port(statistics.portStat);
         });
 
+        socket.on('add rule', (ip, rule, action) => {
+            this.edit_rules(ip, rule, action);
+        });
+
         socket.on('remove rule', ip => {
             document.getElementById(ip).remove();
-        })
+        });
     }
 
     // Display new data in ips chart
@@ -299,21 +295,7 @@ class Stats {
         document.getElementById('rules').append(tr);
 
         document.getElementById(`${ip}-button`).addEventListener('click', () => {
-            console.log(ip, action);
-            if (action === 'remove tmp block') {
-                socket.emit(action, ip, undefined, succesfully => {
-                    if (succesfully) {
-                        document.getElementById(ip).remove();
-                    }
-                });
-            }
-            else {
-                socket.emit(action, ip, succesfully => {
-                    if (succesfully) {
-                        document.getElementById(ip).remove();
-                    }
-                });
-            }
+            socket.emit(action, ip);
         })
     }
 

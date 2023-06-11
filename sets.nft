@@ -2,7 +2,7 @@ table inet filter {
 	set not_process {
 		type ipv4_addr
 		flags interval
-		elements = { 127.0.0.1 }
+		elements = { 127.0.0.1, 192.168.1.1 }
 	}
 }
 table inet filter {

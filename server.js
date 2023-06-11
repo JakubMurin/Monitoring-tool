@@ -26,6 +26,7 @@ server.listen(9000, () => {
 const local_addresses = ['127.0.0.1'];
 
 let sockets = new Set();
+const roomName = "logged";
 
 // load saved statistic from db
 let statistic = {
@@ -52,9 +53,7 @@ db.startupLoad().then((out) => {
           console.log(i, "tmp ends");
           statistic.ips[i].status = 0;
           nft.tmpBlockedIps.remove(i);
-          for (let socket of sockets) {
-            socket.emit('remove rule', i);
-          }
+          io.to(roomName).emit('remove rule', i);
           await db.addRule(ip, 0);
         }, rule.end_time - Date.now(), rule.ip);
       case 1:
@@ -102,16 +101,16 @@ io.on('connect', socket => {
       for (let i of toChange) {
         statistic.ips[i].status = 3;
       }
-      callback(ip, "Removed from stats", 'add to stats');
+      io.to(roomName).emit('add rule', ip, "Removed from stats", 'add to stats');
     })
 
-    socket.on('add to stats', async (ip, callback) => {
+    socket.on('add to stats', async (ip) => {
       const toChange = nft.addToStats(ip);
       await db.addRule(ip, 0);
       for (let i of toChange) {
         statistic.ips[i].status = 0;
       }
-      callback(true, ip);
+      io.to(roomName).emit('remove rule', ip);
     })
 
     // Block
@@ -122,16 +121,16 @@ io.on('connect', socket => {
         console.log(i);
         statistic.ips[i].status = 1;
       }
-      callback(ip, "Blocked IP", 'unblock');
+      io.to(roomName).emit('add rule', ip, "Blocked IP", 'unblock');
     })
 
-    socket.on('unblock', async (ip, callback) => {
+    socket.on('unblock', async (ip) => {
       const toChange = nft.unblockIp(ip);
       await db.addRule(ip, 0);
       for (let i of toChange) {
         statistic.ips[i].status = 0;
       }
-      callback(true, ip);
+      io.to(roomName).emit('remove rule', ip);
     })
 
     // Temporary block
@@ -148,22 +147,20 @@ io.on('connect', socket => {
         setTimeout( async (i) => {
           statistic.ips[i].status = 0;
           nft.tmpBlockedIps.remove(i);
-          for (let soc of sockets) {
-            soc.emit('remove rule', i);
-          }
+          io.to(roomName).emit('remove rule', i);
           await db.addRule(ip, 0);
         }, timeout * 1000, i);
       }
-      callback(ip, "Temporary blocked IP to " + endDate.toLocaleString('en-GB', {timeZone: 'UTC'}), 'remove tmp block');
+      io.to(roomName).emit('add rule', ip, "Temporary blocked IP to " + endDate.toLocaleString('en-GB', {timeZone: 'UTC'}), 'remove tmp block');
     })
 
-    socket.on('remove tmp block', async (ip, time, callback) => {
+    socket.on('remove tmp block', async (ip) => {
       const toChange = nft.removeTmpBlockIp(ip);
       await db.addRule(ip, 0);
       for (let i of toChange) {
         statistic.ips[i].status = 0;
       }
-      callback(true, ip);
+      io.to(roomName).emit('remove rule', ip);
     })
 
     // Get and send similar ips for selected
@@ -206,7 +203,7 @@ io.on('connect', socket => {
     })
 
     // Add to set with sockets for logged in clints
-    sockets.add(socket);
+    socket.join(roomName);
   })
 })
 
@@ -263,9 +260,7 @@ nfq.createQueueHandler(1, 67108864, function (nfpacket) {
 // Refresh statistics every REFRESH_INTERVAL seconds
 const updateInterval = +process.env.REFRESH_INTERVAL * 1000;
 setInterval(() => {
-  for (let socket of sockets) {
-    socket.emit('data update', statistic);
-  }
+  io.to(roomName).emit('data update', statistic);
 }, updateInterval);
 
 // Save stats for ip since last save
