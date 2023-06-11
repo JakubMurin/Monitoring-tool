@@ -41,15 +41,32 @@ db.startupLoad().then((out) => {
   }
   let stats = out[0];
   let rules = out[1];
+  nft.loadStats(Object.keys(stats.ips));
   console.log("Data has been loaded from db");
+
   for (let rule of rules) {
-    if (rule.type !== 0) {
-      if (rule.ip.includes('-')) continue;
-      stats.ips[rule.ip].status = rule.type;
+    switch (rule.type) {
+      case 2:
+        if (rule.end_time - Date.now() <= 0) { break; }
+        setTimeout( async (i) => {
+          console.log(i, "tmp ends");
+          statistic.ips[i].status = 0;
+          nft.tmpBlockedIps.remove(i);
+          for (let socket of sockets) {
+            socket.emit('remove rule', i);
+          }
+          await db.addRule(ip, 0);
+        }, rule.end_time - Date.now(), rule.ip);
+      case 1:
+      case 3:
+        nft.addToSet(rule.ip, rule.type);
+        for (ip of nft.ipInRange(rule.ip)) {
+          stats.ips[ip].status = rule.type;
+        }
     }
+      
   }
   statistic = stats;
-  nft.loadStats(Object.keys(stats.ips));
 });
 
 let tmp_stats = {};
@@ -61,7 +78,7 @@ nft.loadLastNFTSets();
 io.on('connect', socket => {
   console.log(`New client connected`)
 
-  socket.on('disconect', msg => {
+  socket.on('disconnect', msg => {
     sockets.delete(socket);
     console.log(`Client disconected`);
   })
@@ -73,8 +90,8 @@ io.on('connect', socket => {
     }
 
     // Send info about ip address from whois
-    socket.on('ip address', ip => {
-      db.getIpInfo(ip).then(info => socket.emit('ip detail', info));
+    socket.on('ip address', async ip => {
+      await db.getIpInfo(ip).then(info => socket.emit('ip detail', info));
     })
 
     // Remove from stats
@@ -120,18 +137,23 @@ io.on('connect', socket => {
     socket.on('tmp block', async (ip, time, callback) => {
       const toChange = nft.tmpBlockIp(ip, time);
       const timeout = nft.timeToSeconds(time);
-      await db.addRule(ip, 2);
+
+      const endDate = new Date();
+      endDate.setSeconds(endDate.getSeconds() + timeout);
+
+      await db.addRule(ip, 2, dateToTimestamp(endDate));
       for (let i of toChange) {
         statistic.ips[i].status = 2;
         setTimeout( async (i) => {
           statistic.ips[i].status = 0;
-          socket.emit('remove rule', i);
+          nft.tmpBlockedIps.remove(i);
+          for (let soc of sockets) {
+            soc.emit('remove rule', i);
+          }
           await db.addRule(ip, 0);
         }, timeout * 1000, i);
       }
-      const date = new Date();
-      date.setSeconds(date.getSeconds() + timeout);
-      callback(ip, "Temporary blocked IP to " + date.toLocaleString('en-GB', {timeZone: 'UTC'}), 'remove tmp block');
+      callback(ip, "Temporary blocked IP to " + endDate.toLocaleString('en-GB', {timeZone: 'UTC'}), 'remove tmp block');
     })
 
     socket.on('remove tmp block', async (ip, time, callback) => {
@@ -308,4 +330,10 @@ async function similarIP(addr) {
     }
   }
   return simIPs;
+}
+
+// Transform date to mariadb timestamp
+function dateToTimestamp(date) {
+  date.setMinutes(date.getMinutes() - date.getTimezoneOffset());
+  return date.toISOString().slice(0, -1).replace('T', ' ')
 }

@@ -180,6 +180,10 @@ class Stats {
         });
 
         // Socket communcation
+        socket.on('disconnect', () => {
+            alert("Connection with server is closed!");
+        })
+
         socket.on('ip detail', ipData => {
             if (!ipData) {
                 console.log("No data!");
@@ -198,9 +202,13 @@ class Stats {
                 document.getElementById('stats').classList.remove('hide');
                 socket.emit('get rules', rules => {
                     for (let rule of rules) {
-                        if (rule.type !== 0) {
-                            this.edit_rules(rule.ip, ...this.getTextAndAction(rule.type));
+                        if (rule.type === 2) {
+                            let end = new Date(rule.end_time);
+                            if (end.getTime() - Date.now() <= 0) {
+                                continue;
+                            }
                         }
+                        this.edit_rules(rule.ip, ...this.getTextAndAction(rule));
                     }
                 })
             }
@@ -309,10 +317,12 @@ class Stats {
         })
     }
 
-    getTextAndAction(ruleType) {
-        switch (ruleType) {
+    getTextAndAction(rule) {
+        switch (rule.type) {
             case 1: return ['Blocked IP', 'unblock']; // blocked
-            case 2: return ['Temporary blocked IP', 'remove tmp block']; // tmp blocked 
+            case 2: 
+                let endDate = new Date(rule.end_time);
+                return ['Temporary blocked IP to ' + endDate.toLocaleString('en-GB', {timeZone: 'UTC'}), 'remove tmp block']; // tmp blocked 
             case 3: return ['Removed from stats', 'add to stats']; // removed from stats 
         }
     }

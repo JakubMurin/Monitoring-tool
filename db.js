@@ -143,7 +143,7 @@ class DB {
     // Get last applied rule for every ip
     async getRules(conn) {
       const rows = await conn.query(`SELECT r1.ip, r1.type, r1.time_at, r1.end_time FROM rules r1 LEFT JOIN 
-        rules r2 ON r1.ip = r2.ip AND r1.time_at < r2.time_at WHERE r2.ip IS NULL ORDER BY r1.time_at`);
+        rules r2 ON r1.ip = r2.ip AND r1.time_at < r2.time_at WHERE r2.ip IS NULL AND r1.type!=0 ORDER BY r1.time_at`);
 
       return rows;
     }
@@ -162,7 +162,14 @@ class DB {
     }
 
     // Save info about new rule
-    async addRule(ip, type, end_time='NULL') {
+    async addRule(ip, type, end_time) {
+      if (end_time === undefined) {
+        end_time = 'NULL';
+      }
+      else {
+        end_time = `TIMESTAMP('${end_time}')`;
+      }
+
       let conn;
       try {
         conn = await this.pool.getConnection();

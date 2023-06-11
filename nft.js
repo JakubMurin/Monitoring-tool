@@ -18,8 +18,7 @@ class NFT {
     disconnectCommand = 'sudo nft flush chain inet filter monitoring';
 
     saveSetsToFile = 'sudo nft list set inet filter not_process > sets.nft; \
-    sudo nft list set inet filter blocked >> sets.nft; \
-    sudo nft list set inet filter blocked_temporary >> sets.nft';
+    sudo nft list set inet filter blocked >> sets.nft';
     loadSetsFromFile = 'sudo nft -f sets.nft';
 
     ipStats = new Set();
@@ -33,6 +32,33 @@ class NFT {
 
     addIp(ip) {
         this.ipStats.add(IPSet.ipToNum(ip));
+    }
+
+    addToSet(ip, status) {
+        switch (status) {
+            case 1:
+                this.blockedIps.add(ip, []);
+                break;
+            case 2:
+                this.tmpBlockedIps.add(ip, []);
+                break;
+            case 3:
+                this.notInStatsIps.add(ip, []);
+        }
+    }
+
+    ipInRange(ip) {
+        if (ip.includes('-')) {
+            let inRange = [];
+            let [from, to] = ip.split(' - ').map(x => IPSet.ipToNum(x));
+            for (let i of this.ipStats) {
+                if (from <= i && i <= to) {
+                    inRange.push(IPSet.ipToString(i));
+                }
+            }
+            return inRange;
+        }
+        return [ip];
     }
 
     // Add rule to chain monitoring
