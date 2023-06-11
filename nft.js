@@ -17,6 +17,11 @@ class NFT {
     connectCommand = 'sudo nft add rule inet filter monitoring queue num 1';
     disconnectCommand = 'sudo nft flush chain inet filter monitoring';
 
+    saveSetsToFile = 'sudo nft list set inet filter not_process > sets.nft; \
+    sudo nft list set inet filter blocked >> sets.nft; \
+    sudo nft list set inet filter blocked_temporary >> sets.nft';
+    loadSetsFromFile = 'sudo nft -f sets.nft';
+
     ipStats = new Set();
     notInStatsIps = new IPSet(['127.0.0.1']);
     blockedIps = new IPSet();
@@ -47,6 +52,34 @@ class NFT {
     // Remove rule from chain monitoring
     disconnectNfqueue() {
         exec(this.disconnectCommand, (e, out, err) => {
+            if (e) {
+              console.log("error" + e);
+              return;
+            }
+            if (err) {
+              console.log("stderr" + err);
+              return;
+            }
+      });
+    }
+
+    // save current state of sets to file
+    saveCurrentNFTSets() {
+        exec(this.saveSetsToFile, (e, out, err) => {
+            if (e) {
+              console.log("error" + e);
+              return;
+            }
+            if (err) {
+              console.log("stderr" + err);
+              return;
+            }
+      });
+    }
+
+    // load last state of sets from file
+    loadLastNFTSets() {
+        exec(this.loadSetsFromFile, (e, out, err) => {
             if (e) {
               console.log("error" + e);
               return;

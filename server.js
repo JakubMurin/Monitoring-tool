@@ -28,7 +28,11 @@ const local_addresses = ['127.0.0.1'];
 let sockets = new Set();
 
 // load saved statistic from db
-let statistic = {};
+let statistic = {
+  protocols: [0, 0, 0],
+  ips: {},
+  portStat: {}
+};
 
 db.startupLoad().then((out) => {
   if (out.some(x => x===undefined)) {
@@ -40,6 +44,7 @@ db.startupLoad().then((out) => {
   console.log("Data has been loaded from db");
   for (let rule of rules) {
     if (rule.type !== 0) {
+      if (rule.ip.includes('-')) continue;
       stats.ips[rule.ip].status = rule.type;
     }
   }
@@ -51,6 +56,7 @@ let tmp_stats = {};
 
 // redirect packets to nfqueue
 nft.connectNfqueue();
+nft.loadLastNFTSets();
 
 io.on('connect', socket => {
   console.log(`New client connected`)
@@ -169,6 +175,7 @@ io.on('connect', socket => {
     // Shutdow aplication
     socket.on('shutdown', () => {
       db.saveStats(statistic).then(async () => {
+        nft.saveCurrentNFTSets();
         nft.disconnectNfqueue();
         await db.pool.end();
         process.exit();
@@ -230,28 +237,27 @@ nfq.createQueueHandler(1, 67108864, function (nfpacket) {
   nfpacket.setVerdict(nfq.NF_ACCEPT);
 });
 
-let intervalCount = 0;
-const interval = +process.env.INTERVAL_DB_SAVE;
-const updateInterval = +process.env.REFRESH_INTERVAL * 1000;
-
 // Refresh statistics every REFRESH_INTERVAL seconds
+const updateInterval = +process.env.REFRESH_INTERVAL * 1000;
 setInterval(() => {
   for (let socket of sockets) {
     socket.emit('data update', statistic);
   }
-  intervalCount += 1;
-  if (intervalCount === interval) {
-    db.saveIpStats(tmp_stats);
-    tmp_stats = {};
-    intervalCount = 0;
-  }
 }, updateInterval);
 
-const saveInterval = +process.env.SAVE_INTERVAL * 1000;
+// Save stats for ip since last save
+const ipSaveInterval = +process.env.SAVE_INTERVAL_IP_STATS * 1000;
+setInterval(async () => {
+  await db.saveIpStats(tmp_stats);
+  tmp_stats = {};
+}, ipSaveInterval);
+
+const saveInterval = +process.env.SAVE_INTERVAL_WHOLE_STATS * 1000;
 
 // Save whole stats to db
-setInterval(() => {
-  db.saveStats(statistic);
+setInterval(async () => {
+  nft.saveCurrentNFTSets();
+  await db.saveStats(statistic);
 }, saveInterval);
 
 // Get value from plain text
