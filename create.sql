@@ -40,6 +40,7 @@ CREATE TABLE `rules` (
   FOREIGN KEY (`type`) REFERENCES `rule_types` (`id`)
     ON DELETE CASCADE
 );
+CREATE INDEX rules_idx ON rules (ip);
 
 CREATE TABLE `saves` (
   `id` integer AUTO_INCREMENT PRIMARY KEY,

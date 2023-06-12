@@ -79,11 +79,8 @@ class DB {
 
         // insert port stats
         if (Object.keys(data.portStat).length !==  0) {
-          let portsQuery = `INSERT INTO ports (save_id, port, count) VALUES `;
-          for (let [port, count] of Object.entries(data.portStat)) {
-            portsQuery += `(${id},${port},${count}),`;
-          }
-          await conn.query(portsQuery.slice(0, -1));
+          const portData = Object.entries(data.portStat);
+          await conn.batch(`INSERT INTO ports (save_id, port, count) VALUES (${id}, ?, ?)`, portData);
         }
 
         // insert protocols stats
